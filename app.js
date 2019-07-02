@@ -3,7 +3,8 @@ const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser')
 const methodOverride = require('method-override');
-const expressSessions = require('express-session')
+const session = require('express-session');
+const flash = require('connect-flash')
 const app = express();
 
 
@@ -34,6 +35,27 @@ app.use(bodyParser.json())
 
 // Method-Override Middleware
 app.use(methodOverride('_method'));
+
+// Express-Session Middleware
+app.use(session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true
+    // cookie: { secure: true }
+}));
+
+// Flash Middleware
+app.use(flash());
+
+// Global Variables
+app.use(function(req, res, next) {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+});
+
+
 
 // Index Route
 app.get('/', (req, res) => {
@@ -90,7 +112,7 @@ app.post('/ideas', (req, res) => {
     if (!req.body.details) {
         errors.push({ text: "Please Add Details" });
     }
-    
+
     //If errors is greater than 0 we want the user to get the error message to add input 
     if (errors.length > 0) {
         res.render('ideas/add', {
@@ -98,8 +120,8 @@ app.post('/ideas', (req, res) => {
             title: req.body.title,
             details: req.body.details
         });
-    
-    // If all passes and errors is 0 than take the Idea and save and redirect
+
+        // If all passes and errors is 0 than take the Idea and save and redirect
     } else {
         const newUser = {
             title: req.body.title,
@@ -108,6 +130,7 @@ app.post('/ideas', (req, res) => {
         new Idea(newUser)
             .save()
             .then(idea => {
+                req.flash('success_msg', "Video Idea Added");
                 res.redirect('/ideas');
             });
     }
@@ -119,30 +142,32 @@ app.put('/ideas/:id', (req, res) => {
     // Then will allow us to edit the values and save them to that item
     // FInally will redirect us back to the ideas page
     Idea.findOne({
-        _id:req.params.id
+        _id: req.params.id
     })
-    .then(idea => {
-        // New Values to be saved
-        idea.title = req.body.title;
-        idea.details = req.body.details;
+        .then(idea => {
+            // New Values to be saved
+            idea.title = req.body.title;
+            idea.details = req.body.details;
 
-        idea.save()
-            .then( idea => {
-                res.redirect('/ideas')
-            })
-    });
+            idea.save()
+                .then(idea => {
+                    req.flash('success_msg', "Video Idea Updated");
+                    res.redirect('/ideas')
+                })
+        });
 });
 
 // Delete Idea
 app.delete('/ideas/:id', (req, res) => {
-    Idea.remove({
+    Idea.deleteOne({
         // Deleting idea that matches the id from params
-        _id:req.params.id
+        _id: req.params.id
     })
-    .then( () => {
-        // After redirect user back to ideas page
-        res.redirect('/ideas')
-    });
+        .then(() => {
+            // After redirect user back to ideas page
+            req.flash('success_msg', "Video Idea Removed");
+            res.redirect('/ideas')
+        });
 
 });
 
