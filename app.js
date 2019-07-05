@@ -16,13 +16,16 @@ const users = require('./routes/users');
 // Map global promises
 mongoose.Promise = global.Promise;
 
+// DB Config
+//  Unable to make work via video
+
 // Connect to mongoose
-mongoose.connect('mongodb://localhost/video-dev', {
+mongoose.connect(`mongodb+srv://Matt:PasswordAF@video-nxyda.mongodb.net/test?retryWrites=true&w=majority`, {
     // useMongoClient: true, ..."this is no longer needed"
     useNewUrlParser: true
 })
-    .then(() => console.log('MongoDB connected....'))
-    .catch(err => console.log(err));
+.then(() => console.log('MongoDB connected....'))
+.catch(err => console.log(err));
 
 // Handlebars Middleware
 app.engine('handlebars', exphbs({
@@ -86,7 +89,7 @@ app.use('/users', users);
 // Passport Config
 require("./config/passport")(passport);
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server start locally on http://localhost:${PORT}`)
